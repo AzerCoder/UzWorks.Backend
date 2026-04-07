@@ -1,4 +1,5 @@
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.Configuration.Json;
 using UzWorks.API;
 using UzWorks.API.Middleware;
 using UzWorks.API.Utils;
@@ -12,6 +13,12 @@ using UzWorks.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseKestrel();
+
+// Render free tier can hit inotify limits; disable config file watchers.
+foreach (var source in builder.Configuration.Sources.OfType<JsonConfigurationSource>())
+{
+    source.ReloadOnChange = false;
+}
 
 builder.Services.AddOptions();
 builder.Services.Configure<AccessConfiguration>(builder.Configuration.GetSection("AccessConfiguration"));
