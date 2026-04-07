@@ -80,8 +80,8 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 await app.UseRoleInitializerMiddleware();
-//await app.UseLocationInitializerMiddleware();
-//await app.UseJobCategoryInitializerMiddleware();
+await app.UseLocationInitializerMiddleware();
+await app.UseJobCategoryInitializerMiddleware();
 
 //app.UseHttpsRedirection();
 
