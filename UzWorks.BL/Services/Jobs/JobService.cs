@@ -94,11 +94,11 @@ public class JobService(
         return result;
     }
 
-    public async Task<int> GetGountForFilter(Guid? jobCategoryId, int? maxAge,
+    public async Task<int> GetCountForFilter(Guid? jobCategoryId, int? maxAge,
                                        int? minAge, uint? maxSalary, uint? minSalary, int? gender,
                                        bool? status, Guid? regionId, Guid? districtId)
     {
-        return await _jobsRepository.GetcountForFilter(
+        return await _jobsRepository.GetCountForFilter(
                                         jobCategoryId,
                                         maxAge, minAge, maxSalary, minSalary,
                                         gender, status, regionId, districtId);

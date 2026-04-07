@@ -30,7 +30,7 @@ public class JobCategoryService(
         categoryVM.CountOfWorkers = await _workerService.GetCountForFilter(
                 categoryVM.Id, null, null, null, null, null, null, null, null);
 
-        categoryVM.CountOfJobs = await _jobService.GetGountForFilter(
+        categoryVM.CountOfJobs = await _jobService.GetCountForFilter(
             categoryVM.Id, null, null, null, null, null, null, null, null);
 
         return categoryVM;
@@ -45,7 +45,7 @@ public class JobCategoryService(
             category.CountOfWorkers = await _workerService.GetCountForFilter(
                 category.Id, null, null, null, null, null, null, null, null);
 
-            category.CountOfJobs = await _jobService.GetGountForFilter(
+            category.CountOfJobs = await _jobService.GetCountForFilter(
                 category.Id, null, null, null, null, null, null, null, null);
         }
 
@@ -62,7 +62,7 @@ public class JobCategoryService(
         categoryVM.CountOfWorkers = await _workerService.GetCountForFilter(
                 categoryVM.Id, null, null, null, null, null, null, null, null);
 
-        categoryVM.CountOfJobs = await _jobService.GetGountForFilter(
+        categoryVM.CountOfJobs = await _jobService.GetCountForFilter(
             categoryVM.Id, null, null, null, null, null, null, null, null);
 
         return categoryVM;
@@ -89,7 +89,7 @@ public class JobCategoryService(
         categoryVM.CountOfWorkers = await _workerService.GetCountForFilter(
                 categoryVM.Id, null, null, null, null, null, null, null, null);
 
-        categoryVM.CountOfJobs = await _jobService.GetGountForFilter(
+        categoryVM.CountOfJobs = await _jobService.GetCountForFilter(
             categoryVM.Id, null, null, null, null, null, null, null, null);
 
         return categoryVM;

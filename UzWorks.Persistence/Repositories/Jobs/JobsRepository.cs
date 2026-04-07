@@ -17,9 +17,13 @@ public class JobsRepository : GenericRepository<Job>, IJobsRepository
     {
         var query = _dbSet.Where(j => !j.IsDeleted).AsQueryable();
 
-        if (status != null) { 
+        if (status is true) { 
             query = query.Where(x => x.Status == true);
             query = query.Where(x => x.Deadline >= DateTime.Now);
+        }
+        else if (status is false)
+        {
+            query = query.Where(x => x.Status == false);
         }
 
         if (jobCategoryId != null)
@@ -54,27 +58,38 @@ public class JobsRepository : GenericRepository<Job>, IJobsRepository
 
     public async Task<int> GetCount(bool? statusType)
     {
-        var query = _dbSet.AsQueryable();
+        var query = _dbSet.Where(j => !j.IsDeleted).AsQueryable();
 
-        if (statusType == null || statusType == false)
+        if (statusType is null)
             return await _context.Jobs.CountAsync();
-    
-        query = query.Where(x => x.Status == true);
-        query = query.Where(x => x.Deadline >= DateTime.Now);
+
+        if (statusType is true)
+        {
+            query = query.Where(x => x.Status == true);
+            query = query.Where(x => x.Deadline >= DateTime.Now);
+        }
+        else
+        {
+            query = query.Where(x => x.Status == false);
+        }
         
         return await query.CountAsync();
     }
 
-    public async Task<int> GetcountForFilter(Guid? jobCategoryId = null, int? maxAge = null, 
+    public async Task<int> GetCountForFilter(Guid? jobCategoryId = null, int? maxAge = null, 
                             int? minAge = null, uint? maxSalary = null, uint? minSalary = null, 
                             int? gender = null, bool? status = null, Guid? regionId = null, Guid? districtId = null)
     {
         var query = _dbSet.Where(j => !j.IsDeleted).AsQueryable();
 
-        if (status != null)
+        if (status is true)
         {
             query = query.Where(x => x.Status == true);
             query = query.Where(x => x.Deadline >= DateTime.Now);
+        }
+        else if (status is false)
+        {
+            query = query.Where(x => x.Status == false);
         }
 
         if (jobCategoryId != null)
@@ -105,7 +120,7 @@ public class JobsRepository : GenericRepository<Job>, IJobsRepository
     }
 
     public async Task<Job[]> GetByUserIdAsync(Guid userId) =>
-        await _dbSet.Where(x => x.CreatedBy == userId).ToArrayAsync();
+        await _dbSet.Where(x => !x.IsDeleted && x.CreatedBy == userId).ToArrayAsync();
 
     public async Task<Job[]> GetTopsAsync()
     {

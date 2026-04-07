@@ -30,7 +30,8 @@ public class EnvironmentAccessor(
         if (_contextAccessor.HttpContext is null)
             throw new UzWorksException("HttpContext can not be null.");
 
-        if (_contextAccessor.HttpContext.User.IsInRole(RoleNames.SuperAdmin))
+        if (_contextAccessor.HttpContext.User.IsInRole(RoleNames.SuperAdmin) ||
+            _contextAccessor.HttpContext.User.IsInRole(RoleNames.Supervisor))
             return true;
 
         return false;

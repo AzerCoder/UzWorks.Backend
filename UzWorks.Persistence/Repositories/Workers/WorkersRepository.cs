@@ -15,28 +15,32 @@ public class WorkersRepository : GenericRepository<Worker>, IWorkersRepository
                         Guid? jobCategoryId, int? maxAge, int? minAge, uint? maxSalary,
                         uint? minSalary, int? gender, bool? status, Guid? regionId, Guid? districtId)
     {
-        var query = _dbSet.AsQueryable();
+        var query = _dbSet.Where(x => !x.IsDeleted).AsQueryable();
 
-        if (status != null)
+        if (status is true)
         {
             query = query.Where(x => x.Status == true);
             query = query.Where(x => x.Deadline >= DateTime.Now);
+        }
+        else if (status is false)
+        {
+            query = query.Where(x => x.Status == false);
         }
 
         if (jobCategoryId is not null)
             query = query.Where(x => x.CategoryId == jobCategoryId);
 
         if (maxAge is not null)
-            query = query.Where(x => (DateTime.Now.Year - x.BirthDate.Year) < maxAge);
+            query = query.Where(x => (DateTime.Now.Year - x.BirthDate.Year) <= maxAge);
 
         if (minAge is not null)
-            query = query.Where(x => (DateTime.Now.Year - x.BirthDate.Year) > minAge);
+            query = query.Where(x => (DateTime.Now.Year - x.BirthDate.Year) >= minAge);
 
         if (maxSalary is not null)
-            query = query.Where(x => (x.Salary < maxSalary));
+            query = query.Where(x => x.Salary <= maxSalary);
 
         if (minSalary is not null)
-            query = query.Where(x => (x.Salary > minSalary));
+            query = query.Where(x => x.Salary >= minSalary);
 
         if (gender is not null)
             query = query.Where(x => x.Gender.Equals((GenderEnum)gender));
@@ -55,13 +59,20 @@ public class WorkersRepository : GenericRepository<Worker>, IWorkersRepository
 
     public async Task<int> GetCount(bool? statusType) 
     {
-        var query = _dbSet.AsQueryable();
+        var query = _dbSet.Where(x => !x.IsDeleted).AsQueryable();
 
-        if (statusType == null || statusType == false)
+        if (statusType is null)
             return await query.CountAsync();
-    
-        query = query.Where(x => x.Status == true);
-        query = query.Where(x => x.Deadline >= DateTime.Now);
+
+        if (statusType is true)
+        {
+            query = query.Where(x => x.Status == true);
+            query = query.Where(x => x.Deadline >= DateTime.Now);
+        }
+        else
+        {
+            query = query.Where(x => x.Status == false);
+        }
         
         return await query.CountAsync();
     }
@@ -70,28 +81,32 @@ public class WorkersRepository : GenericRepository<Worker>, IWorkersRepository
                              int? minAge = null, uint? maxSalary = null, uint? minSalary = null, 
                              int? gender = null, bool? status = null, Guid? regionId = null, Guid? districtId = null)
     {
-        var query = _dbSet.AsQueryable();
+        var query = _dbSet.Where(x => !x.IsDeleted).AsQueryable();
 
-        if (status != null)
+        if (status is true)
         {
             query = query.Where(x => x.Status == true);
             query = query.Where(x => x.Deadline >= DateTime.Now);
+        }
+        else if (status is false)
+        {
+            query = query.Where(x => x.Status == false);
         }
 
         if (jobCategoryId is not null)
             query = query.Where(x => x.CategoryId == jobCategoryId);
 
         if (maxAge is not null)
-            query = query.Where(x => (DateTime.Now.Year - x.BirthDate.Year) < maxAge);
+            query = query.Where(x => (DateTime.Now.Year - x.BirthDate.Year) <= maxAge);
 
         if (minAge is not null)
-            query = query.Where(x => (DateTime.Now.Year - x.BirthDate.Year) > minAge);
+            query = query.Where(x => (DateTime.Now.Year - x.BirthDate.Year) >= minAge);
 
         if (maxSalary is not null)
-            query = query.Where(x => (x.Salary < maxSalary));
+            query = query.Where(x => x.Salary <= maxSalary);
 
         if (minSalary is not null)
-            query = query.Where(x => (x.Salary > minSalary));
+            query = query.Where(x => x.Salary >= minSalary);
 
         if (gender is not null)
             query = query.Where(x => x.Gender.Equals((GenderEnum)gender));
@@ -106,10 +121,10 @@ public class WorkersRepository : GenericRepository<Worker>, IWorkersRepository
     }
 
     public async Task<Worker[]> GetByUserIdAsync(Guid userId) =>
-        await _dbSet.Where(x => x.CreatedBy == userId).ToArrayAsync() ;
+        await _dbSet.Where(x => !x.IsDeleted && x.CreatedBy == userId).ToArrayAsync() ;
 
     public async Task<int> CountOfAnnouncements(Guid userId) =>
-        await _dbSet.Where(x => x.CreatedBy == userId).CountAsync();
+        await _dbSet.Where(x => !x.IsDeleted && x.CreatedBy == userId).CountAsync();
 
     public async Task<Worker[]> GetTopsAsync()
     {

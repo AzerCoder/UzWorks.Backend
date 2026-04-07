@@ -61,7 +61,7 @@ public class JobController(IJobService _jobService) : BaseController
                                             [FromQuery] uint? minSalary, [FromQuery] int? gender,
                                             [FromQuery] Guid? regionId, [FromQuery] Guid? districtId) =>
 
-        Ok(await _jobService.GetGountForFilter(jobCategoryId,
+        Ok(await _jobService.GetCountForFilter(jobCategoryId,
                          maxAge, minAge, maxSalary, minSalary,
                          gender, true, regionId, districtId));
 
