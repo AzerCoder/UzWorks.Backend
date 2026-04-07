@@ -68,12 +68,11 @@ public class WorkerService(
                         Guid? jobCategoryId, int? maxAge, 
                         int? minAge, uint? maxSalary, 
                         uint? minSalary, int? gender, bool? status, 
-                        Guid? regionId, Guid? districtId,
-                        Guid? currentUserId = null) =>
+                        Guid? regionId, Guid? districtId) =>
         _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
             await _workersRepository.GetAllAsync(pageNumber, pageSize, jobCategoryId,
             maxAge, minAge, maxSalary, minSalary,
-            gender, status, regionId, districtId, currentUserId));
+            gender, status, regionId, districtId));
 
     public async Task<WorkerVM> GetById(Guid id)
     {
