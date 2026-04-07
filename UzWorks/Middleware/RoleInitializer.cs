@@ -28,16 +28,23 @@ namespace UzWorks.API.Middleware;
             if (await roleManager.FindByNameAsync(role.Key) == null)
                 await roleManager.CreateAsync(new Role(role.Key, role.Value));
 
+        var adminRoles = new[]
+        {
+            RoleNames.Employee,
+            RoleNames.Employer,
+            RoleNames.SuperAdmin,
+            RoleNames.Supervisor
+        };
+
         User user = await userManager.FindByNameAsync(SuperAdminEmail);
 
         if (user != null) 
         {
-            await userManager.AddToRolesAsync(user, [
-                RoleNames.Employee,
-                RoleNames.Employer,
-                RoleNames.SuperAdmin,
-                RoleNames.Supervisor
-            ]);
+            foreach (var roleName in adminRoles)
+            {
+                if (!await userManager.IsInRoleAsync(user, roleName))
+                    await userManager.AddToRoleAsync(user, roleName);
+            }
         }
 
         else
@@ -51,12 +58,13 @@ namespace UzWorks.API.Middleware;
             IdentityResult result = await userManager.CreateAsync(user, SuperAdminPassword);
             
             if (result.Succeeded)
-                await userManager.AddToRolesAsync(user, [
-                    RoleNames.Employee,
-                    RoleNames.Employer,
-                    RoleNames.SuperAdmin,
-                    RoleNames.Supervisor
-                ]);
+            {
+                foreach (var roleName in adminRoles)
+                {
+                    if (!await userManager.IsInRoleAsync(user, roleName))
+                        await userManager.AddToRoleAsync(user, roleName);
+                }
+            }
 
         }
 
@@ -65,12 +73,11 @@ namespace UzWorks.API.Middleware;
 
         if (extraAdminUser != null)
         {
-            await userManager.AddToRolesAsync(extraAdminUser, [
-                RoleNames.Employee,
-                RoleNames.Employer,
-                RoleNames.SuperAdmin,
-                RoleNames.Supervisor
-            ]);
+            foreach (var roleName in adminRoles)
+            {
+                if (!await userManager.IsInRoleAsync(extraAdminUser, roleName))
+                    await userManager.AddToRoleAsync(extraAdminUser, roleName);
+            }
         }
         else
         {
@@ -84,12 +91,11 @@ namespace UzWorks.API.Middleware;
 
             if (result.Succeeded)
             {
-                await userManager.AddToRolesAsync(extraAdminUser, [
-                    RoleNames.Employee,
-                    RoleNames.Employer,
-                    RoleNames.SuperAdmin,
-                    RoleNames.Supervisor
-                ]);
+                foreach (var roleName in adminRoles)
+                {
+                    if (!await userManager.IsInRoleAsync(extraAdminUser, roleName))
+                        await userManager.AddToRoleAsync(extraAdminUser, roleName);
+                }
             }
         }
     }
