@@ -1,4 +1,4 @@
-﻿using UzWorks.Core.Abstract;
+using UzWorks.Core.Abstract;
 using UzWorks.Core.DataTransferObjects.Workers;
 using UzWorks.Core.Entities.JobAndWork;
 using UzWorks.Core.Exceptions;
@@ -32,6 +32,7 @@ public class WorkerService(
         
         worker.CreateDate = DateTime.Now;
         worker.CreatedBy = Guid.Parse(_environmentAccessor.GetUserId());
+        worker.Status = false;
 
         var userId = Guid.Parse(_environmentAccessor.GetUserId());
 

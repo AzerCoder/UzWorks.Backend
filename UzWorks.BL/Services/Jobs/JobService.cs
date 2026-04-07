@@ -1,4 +1,4 @@
-﻿using UzWorks.Core.Abstract;
+using UzWorks.Core.Abstract;
 using UzWorks.Core.DataTransferObjects.Jobs;
 using UzWorks.Core.Entities.JobAndWork;
 using UzWorks.Core.Exceptions;
@@ -35,6 +35,7 @@ public class JobService(
 
         job.CreateDate = DateTime.Now;
         job.CreatedBy = userId;
+        job.Status = false;
 
         if (_environmentAccessor.IsAdmin(userId))
         {
