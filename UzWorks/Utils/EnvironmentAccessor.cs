@@ -1,6 +1,8 @@
 ﻿using UzWorks.Core.Abstract;
 using UzWorks.Core.Constants;
 using UzWorks.Core.Exceptions;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using UzWorks.Identity.Constants;
 
 namespace UzWorks.API.Utils;
@@ -56,8 +58,21 @@ public class EnvironmentAccessor(
         return false;
     }
 
-    public string GetUserId() =>
-        _contextAccessor.HttpContext.User.Claims.FirstOrDefault(x => x.Type.Equals(ClaimNames.UserId.ToString()))?.Value;
+    public string GetUserId()
+    {
+        if (_contextAccessor.HttpContext is null)
+            throw new UzWorksException("HttpContext can not be null.");
+
+        var claims = _contextAccessor.HttpContext.User.Claims;
+        var userId = claims.FirstOrDefault(x => x.Type == ClaimNames.UserId)?.Value
+                     ?? claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value
+                     ?? claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Sub)?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new UzWorksException("UserId claim not found in token.");
+
+        return userId;
+    }
 
     public string GetUserName() =>
         _contextAccessor.HttpContext.User.Claims.FirstOrDefault(x => x.Type.Equals(ClaimNames.UserName.ToString()))?.Value;

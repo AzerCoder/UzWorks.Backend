@@ -8,7 +8,7 @@ namespace UzWorks.API.Controllers;
 
 public class WorkerController(IWorkerService _workerService) : BaseController
 {
-    [Authorize(Roles = RoleNames.Employee)]
+    [Authorize(Roles = $"{RoleNames.Employee},{RoleNames.SuperAdmin},{RoleNames.Supervisor}")]
     [HttpPost]
     public async Task<ActionResult<WorkerVM>> Create([FromBody] WorkerDto workerDto) =>
         Ok(await _workerService.Create(workerDto));

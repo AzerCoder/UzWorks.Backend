@@ -8,7 +8,7 @@ namespace UzWorks.API.Controllers;
 
 public class JobController(IJobService _jobService) : BaseController
 {
-    [Authorize(Roles = RoleNames.Employer)]
+    [Authorize(Roles = $"{RoleNames.Employer},{RoleNames.SuperAdmin},{RoleNames.Supervisor}")]
     [HttpPost]
     public async Task<ActionResult<JobVM>> Create(JobDto jobDto) =>
         Ok(await _jobService.Create(jobDto));
