@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using UzWorks.BL.Services.Workers;
 using UzWorks.Core.Constants;
 using UzWorks.Core.DataTransferObjects.Workers;
+using UzWorks.Identity.Constants;
 
 namespace UzWorks.API.Controllers;
 
@@ -19,11 +21,21 @@ public class WorkerController(IWorkerService _workerService) : BaseController
                                             [FromQuery] Guid? jobCategoryId, [FromQuery] int? maxAge,
                                             [FromQuery] int? minAge, [FromQuery] uint? maxSalary,
                                             [FromQuery] uint? minSalary, [FromQuery] int? gender,
-                                            [FromQuery] Guid? regionId, [FromQuery] Guid? districtId) =>
-        Ok(await _workerService.GetAllAsync(
+                                            [FromQuery] Guid? regionId, [FromQuery] Guid? districtId)
+    {
+        Guid? currentUserId = null;
+
+        var claimUserId = User.Claims.FirstOrDefault(x => x.Type == ClaimNames.UserId)?.Value
+            ?? User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier)?.Value;
+
+        if (Guid.TryParse(claimUserId, out var parsedUserId))
+            currentUserId = parsedUserId;
+
+        return Ok(await _workerService.GetAllAsync(
                          pageNumber, pageSize, jobCategoryId,
                          maxAge, minAge, maxSalary, minSalary,
-                         gender, true, regionId, districtId));
+                         gender, true, regionId, districtId, currentUserId));
+    }
 
     [AllowAnonymous]
     [HttpGet("{id}")]

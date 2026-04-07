@@ -13,14 +13,24 @@ public class WorkersRepository : GenericRepository<Worker>, IWorkersRepository
 
     public async Task<Worker[]> GetAllAsync(int pageNumber, int pageSize,
                         Guid? jobCategoryId, int? maxAge, int? minAge, uint? maxSalary,
-                        uint? minSalary, int? gender, bool? status, Guid? regionId, Guid? districtId)
+                        uint? minSalary, int? gender, bool? status, Guid? regionId, Guid? districtId,
+                        Guid? currentUserId = null)
     {
         var query = _dbSet.Where(x => !x.IsDeleted).AsQueryable();
 
         if (status is true)
         {
-            query = query.Where(x => x.Status == true);
-            query = query.Where(x => x.Deadline >= DateTime.Now);
+            if (currentUserId is not null)
+            {
+                query = query.Where(x =>
+                    (x.Status == true && x.Deadline >= DateTime.Now) ||
+                    x.CreatedBy == currentUserId);
+            }
+            else
+            {
+                query = query.Where(x => x.Status == true);
+                query = query.Where(x => x.Deadline >= DateTime.Now);
+            }
         }
         else if (status is false)
         {
