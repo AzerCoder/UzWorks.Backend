@@ -45,9 +45,14 @@ public class ExceptionHandler(
         _logger.LogError($"{ex.Message} {Environment.NewLine}Trace: {ex.StackTrace}");
 
         context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+        context.Response.ContentType = "application/json";
 
         await context.Response.WriteAsync(
-            JsonSerializer.Serialize(new { error = "Something went wrong. Please, contact administrator" }));
+            JsonSerializer.Serialize(new
+            {
+                error = ex.Message,
+                traceId = context.TraceIdentifier
+            }));
     }
 
     private static async Task HandleUnauthorizedException(HttpContext context)
