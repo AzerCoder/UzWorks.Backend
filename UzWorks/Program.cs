@@ -92,5 +92,7 @@ app.UseCors();
 app.UseMiddleware<ExceptionHandler>();
 
 app.MapControllers();
+app.MapGet("/", () => Results.Ok("UzWorks backend is running"));
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 
 app.Run();
