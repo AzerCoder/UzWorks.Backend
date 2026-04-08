@@ -19,8 +19,7 @@ RUN dotnet publish "UzWorks/UzWorks.API.csproj" -c Release -o /app/publish /p:Us
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
 
-ENV ASPNETCORE_URLS=http://+:10000
 EXPOSE 10000
 
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "UzWorks.API.dll"]
+ENTRYPOINT ["sh", "-c", "ASPNETCORE_URLS=http://0.0.0.0:${PORT:-10000} dotnet UzWorks.API.dll"]
