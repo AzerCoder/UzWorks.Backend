@@ -21,6 +21,9 @@ public class WorkerService(
 {
     public async Task<WorkerVM> Create(WorkerDto workerDto)
     {
+        if (workerDto.BirthDate == default)
+            throw new UzWorksException("BirthDate is required.");
+
         if (!await _districtsRepository.IsExist(workerDto.DistrictId))
             throw new UzWorksException($"Could not find district with id: {workerDto.DistrictId}");
 
@@ -68,11 +71,17 @@ public class WorkerService(
                         Guid? jobCategoryId, int? maxAge, 
                         int? minAge, uint? maxSalary, 
                         uint? minSalary, int? gender, bool? status, 
-                        Guid? regionId, Guid? districtId) =>
-        _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
+                        Guid? regionId, Guid? districtId)
+    {
+        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
             await _workersRepository.GetAllAsync(pageNumber, pageSize, jobCategoryId,
-            maxAge, minAge, maxSalary, minSalary,
-            gender, status, regionId, districtId));
+                maxAge, minAge, maxSalary, minSalary,
+                gender, status, regionId, districtId)).ToList();
+
+        await FillWorkerFullNames(workers);
+
+        return workers;
+    }
 
     public async Task<WorkerVM> GetById(Guid id)
     {
@@ -90,13 +99,25 @@ public class WorkerService(
     public Task<int> GetCount(bool? status) =>
         _workersRepository.GetCount(status);
 
-    public async Task<IEnumerable<WorkerVM>> GetByUserId(Guid userId) =>
-        _mappingService.Map<IEnumerable<WorkerVM>,IEnumerable<Worker>>
-            (await _workersRepository.GetByUserIdAsync(userId));
+    public async Task<IEnumerable<WorkerVM>> GetByUserId(Guid userId)
+    {
+        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
+            await _workersRepository.GetByUserIdAsync(userId)).ToList();
 
-    public async Task<IEnumerable<WorkerVM>> GetTops() =>
-        _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
-            await _workersRepository.GetTopsAsync());
+        await FillWorkerFullNames(workers);
+
+        return workers;
+    }
+
+    public async Task<IEnumerable<WorkerVM>> GetTops()
+    {
+        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
+            await _workersRepository.GetTopsAsync()).ToList();
+
+        await FillWorkerFullNames(workers);
+
+        return workers;
+    }
 
     public Task<int> GetCountForFilter(Guid? jobCategoryId, int? maxAge,
                         int? minAge, uint? maxSalary,
@@ -193,5 +214,23 @@ public class WorkerService(
         await _workersRepository.SaveChanges();
 
         return true;
+    }
+
+    private async Task FillWorkerFullNames(List<WorkerVM> workers)
+    {
+        foreach (var worker in workers)
+        {
+            if (worker.CreatedBy == Guid.Empty)
+                continue;
+
+            try
+            {
+                worker.FullName = await _userService.GetUserFullName(worker.CreatedBy);
+            }
+            catch
+            {
+                worker.FullName = string.Empty;
+            }
+        }
     }
 }
