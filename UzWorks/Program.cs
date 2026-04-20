@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using Microsoft.Extensions.Configuration.Json;
 using UzWorks.API;
+using UzWorks.API.Hubs;
 using UzWorks.API.Middleware;
 using UzWorks.API.Utils;
 using UzWorks.BL;
@@ -62,15 +64,43 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddScoped<IEnvironmentAccessor, EnvironmentAccessor>();
 
 builder.Services.RegisterIdentityModule(builder.Configuration);
+
+// Allow SignalR to read JWT from query string (?access_token=...)
+builder.Services.Configure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
+{
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var token = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(token) && path.StartsWithSegments("/hubs"))
+                context.Token = token;
+            return Task.CompletedTask;
+        }
+    };
+});
 builder.Services.RegisterPersistenceModule(builder.Configuration);
 builder.Services.RegisterBLModule();
 builder.Services.RegisterInfrastructureModule(builder.Configuration);
+
+builder.Services.AddSignalR();
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(opt =>
     {
         opt.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+
+    options.AddPolicy("SignalRPolicy", opt =>
+    {
+        opt.WithOrigins(
+                builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+                ?? ["http://localhost:3000", "http://localhost:5173"])
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -92,6 +122,7 @@ app.UseCors();
 app.UseMiddleware<ExceptionHandler>();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat").RequireCors("SignalRPolicy");
 app.MapGet("/", () => Results.Ok("UzWorks backend is running"));
 app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }));
 

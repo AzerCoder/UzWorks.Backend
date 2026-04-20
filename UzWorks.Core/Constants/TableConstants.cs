@@ -10,4 +10,6 @@ public static class TableConstants
     public static string WorkerExperiencesTable = "Experiences";
 
     public static string RefreshTokensTable = "RefreshTokens";
+    public static string ConversationsTable = "Conversations";
+    public static string MessagesTable = "Messages";
 }

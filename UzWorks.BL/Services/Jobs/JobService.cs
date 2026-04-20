@@ -2,6 +2,7 @@ using UzWorks.Core.Abstract;
 using UzWorks.Core.DataTransferObjects.Jobs;
 using UzWorks.Core.Entities.JobAndWork;
 using UzWorks.Core.Exceptions;
+using UzWorks.Identity.Services.Roles;
 using UzWorks.Persistence.Repositories.Districts;
 using UzWorks.Persistence.Repositories.JobCategories;
 using UzWorks.Persistence.Repositories.Jobs;
@@ -13,9 +14,10 @@ public class JobService(
     IJobsRepository _jobsRepository,
     IMappingService _mappingService,
     IEnvironmentAccessor _environmentAccessor,
+    IUserService _userService,
     IDistrictsRepository _districtsRepository,
     IRegionsRepository _regionsRepository,
-    IJobCategoriesRepository _jobCategoriesRepository) 
+    IJobCategoriesRepository _jobCategoriesRepository)
         : IJobService
 {
     public async Task<JobVM> Create(JobDto jobDto)
@@ -59,26 +61,44 @@ public class JobService(
         return _mappingService.Map<JobVM, Job>(job);
     }
 
-    public async Task<IEnumerable<JobVM>> GetAllAsync(int pageNumber, int pageSize, Guid? jobCategoryId, int? maxAge, 
-                                                int? minAge, uint? maxSalary, uint? minSalary, int? gender, 
-                                                bool? status, Guid? regionId, Guid? districtId)=>
-        _mappingService.Map<IEnumerable<JobVM>, IEnumerable<Job>>(
+    public async Task<IEnumerable<JobVM>> GetAllAsync(int pageNumber, int pageSize, Guid? jobCategoryId, int? maxAge,
+                                                int? minAge, uint? maxSalary, uint? minSalary, int? gender,
+                                                bool? status, Guid? regionId, Guid? districtId)
+    {
+        var jobs = _mappingService.Map<IEnumerable<JobVM>, IEnumerable<Job>>(
             await _jobsRepository.GetAllAsync(
                 pageNumber, pageSize, jobCategoryId,
                 maxAge, minAge, maxSalary, minSalary,
-                gender, status, regionId, districtId));
+                gender, status, regionId, districtId)).ToList();
+
+        await FillJobFullNames(jobs);
+        return jobs;
+    }
 
     public async Task<JobVM> GetById(Guid id)
     {
         var job = await _jobsRepository.GetById(id) ??
             throw new UzWorksException($"Could not find job with id: {id}");
 
-        return _mappingService.Map<JobVM, Job>(job);
+        var result = _mappingService.Map<JobVM, Job>(job);
+
+        if (job.CreatedBy.HasValue)
+        {
+            try { result.FullName = await _userService.GetUserFullName(job.CreatedBy.Value); }
+            catch { result.FullName = string.Empty; }
+        }
+
+        return result;
     }
 
-    public async Task<IEnumerable<JobVM>> GetTops() =>
-        _mappingService.Map<IEnumerable<JobVM>, IEnumerable<Job>>
-            (await _jobsRepository.GetTopsAsync());
+    public async Task<IEnumerable<JobVM>> GetTops()
+    {
+        var jobs = _mappingService.Map<IEnumerable<JobVM>, IEnumerable<Job>>(
+            await _jobsRepository.GetTopsAsync()).ToList();
+
+        await FillJobFullNames(jobs);
+        return jobs;
+    }
 
     public Task<int> GetCount(bool? statys) =>
         _jobsRepository.GetCount(statys);
@@ -88,10 +108,11 @@ public class JobService(
         if (!_environmentAccessor.IsAuthorOrSupervisor(userId))
             throw new UzWorksException($"You have not access to get this {userId}'s jobs.");
 
-        var jobs = await _jobsRepository.GetByUserIdAsync(userId);
-        var result = _mappingService.Map<IEnumerable<JobVM>, IEnumerable<Job>>(jobs);
+        var jobs = _mappingService.Map<IEnumerable<JobVM>, IEnumerable<Job>>(
+            await _jobsRepository.GetByUserIdAsync(userId)).ToList();
 
-        return result;
+        await FillJobFullNames(jobs);
+        return jobs;
     }
 
     public async Task<int> GetCountForFilter(Guid? jobCategoryId, int? maxAge,
@@ -186,5 +207,15 @@ public class JobService(
         await _jobsRepository.SaveChanges();
 
         return true;
+    }
+
+    private async Task FillJobFullNames(List<JobVM> jobs)
+    {
+        foreach (var job in jobs)
+        {
+            if (job.CreatedBy == Guid.Empty) continue;
+            try { job.FullName = await _userService.GetUserFullName(job.CreatedBy); }
+            catch { job.FullName = string.Empty; }
+        }
     }
 }

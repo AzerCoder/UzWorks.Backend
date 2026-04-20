@@ -9,6 +9,7 @@ using UzWorks.BL.Services.Locations.Districts;
 using UzWorks.BL.Services.Locations.Regions;
 using UzWorks.BL.Services.TelegramMessageSenderBot;
 using UzWorks.BL.Services.Workers;
+using UzWorks.BL.Services.Chat;
 using UzWorks.BL.Services.Workers.Experiences;
 
 namespace UzWorks.BL;
@@ -28,6 +29,7 @@ public static class BusinessLogicModule
         services.AddScoped<IFeedBackService, FeedBackService>();
         services.AddScoped<ITelegramMessageSenderService, TelegramMessageSenderService>();
         services.AddScoped<IAdvertisementService, AdvertisementService>();
+        services.AddScoped<IChatService, ChatService>();
 
         return services;
     }

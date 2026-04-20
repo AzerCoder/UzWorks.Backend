@@ -14,6 +14,7 @@ using UzWorks.Persistence.Repositories.Contacts;
 using UzWorks.Persistence.Repositories.FAQs;
 using UzWorks.Persistence.Repositories.FeedBacks;
 using UzWorks.Persistence.Repositories.Advertisements;
+using UzWorks.Persistence.Repositories.Chat;
 
 namespace UzWorks.Persistence;
 
@@ -39,6 +40,8 @@ public static class PersistenceModule
         services.AddScoped<IFAQsRepository, FAQsRepository>();
         services.AddScoped<IFeedBacksRepository, FeedBacksRepository>();
         services.AddScoped<IAdvertisementsRepository, AdvertisementsRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
+        services.AddScoped<IMessageRepository, MessageRepository>();
 
         using var provider = services.BuildServiceProvider();
 

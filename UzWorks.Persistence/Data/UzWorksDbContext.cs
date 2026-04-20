@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 using UzWorks.Core.Entities.Advertisements;
+using UzWorks.Core.Entities.Chat;
 using UzWorks.Core.Entities.Contacts;
 using UzWorks.Core.Entities.Experiences;
 using UzWorks.Core.Entities.FAQs;
@@ -24,6 +25,8 @@ public class UzWorksDbContext : DbContext
     public DbSet<FAQ> FAQs { get; set; }
     public DbSet<FeedBack> FeedBacks { get; set; }
     public DbSet<Advertisement> Advertisements { get; set; }
+    public DbSet<Conversation> Conversations { get; set; }
+    public DbSet<Message> Messages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
