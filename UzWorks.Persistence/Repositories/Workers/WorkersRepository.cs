@@ -21,7 +21,7 @@ public class WorkersRepository : GenericRepository<Worker>, IWorkersRepository
                         Guid? jobCategoryId, int? maxAge, int? minAge, uint? maxSalary,
                         uint? minSalary, int? gender, bool? status, Guid? regionId, Guid? districtId)
     {
-        var query = _dbSet.Where(x => !x.IsDeleted).AsQueryable();
+        var query = _dbSet.Include(x => x.Experiences).Where(x => !x.IsDeleted).AsQueryable();
 
         if (status is true)
         {
@@ -127,14 +127,14 @@ public class WorkersRepository : GenericRepository<Worker>, IWorkersRepository
     }
 
     public async Task<Worker[]> GetByUserIdAsync(Guid userId) =>
-        await _dbSet.Where(x => !x.IsDeleted && x.CreatedBy == userId).ToArrayAsync() ;
+        await _dbSet.Include(x => x.Experiences).Where(x => !x.IsDeleted && x.CreatedBy == userId).ToArrayAsync() ;
 
     public async Task<int> CountOfAnnouncements(Guid userId) =>
         await _dbSet.Where(x => !x.IsDeleted && x.CreatedBy == userId).CountAsync();
 
     public async Task<Worker[]> GetTopsAsync()
     {
-        var query = _dbSet.Where(j => !j.IsDeleted).AsQueryable();
+        var query = _dbSet.Include(x => x.Experiences).Where(j => !j.IsDeleted).AsQueryable();
 
         query = query.Where(x => x.IsTop == true);
         query = query.Where(x => x.Status == true);
