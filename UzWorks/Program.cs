@@ -115,9 +115,10 @@ await app.UseJobCategoryInitializerMiddleware();
 
 //app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
 app.UseCors();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseMiddleware<ExceptionHandler>();
 
