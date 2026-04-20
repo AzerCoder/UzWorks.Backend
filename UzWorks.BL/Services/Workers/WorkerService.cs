@@ -1,5 +1,7 @@
 using UzWorks.Core.Abstract;
+using UzWorks.Core.DataTransferObjects.Experiences;
 using UzWorks.Core.DataTransferObjects.Workers;
+using UzWorks.Core.Entities.Experiences;
 using UzWorks.Core.Entities.JobAndWork;
 using UzWorks.Core.Exceptions;
 using UzWorks.Identity.Services.Roles;
@@ -7,6 +9,7 @@ using UzWorks.Persistence.Repositories.Districts;
 using UzWorks.Persistence.Repositories.JobCategories;
 using UzWorks.Persistence.Repositories.Regions;
 using UzWorks.Persistence.Repositories.Workers;
+using UzWorks.Persistence.Repositories.Workers.Experiences;
 
 namespace UzWorks.BL.Services.Workers;
 
@@ -17,7 +20,8 @@ public class WorkerService(
     IUserService _userService,
     IDistrictsRepository _districtsRepository,
     IRegionsRepository _regionsRepository,
-    IJobCategoriesRepository _jobCategoriesRepository) : IWorkerService
+    IJobCategoriesRepository _jobCategoriesRepository,
+    IExperienceRepository _experienceRepository) : IWorkerService
 {
     public async Task<WorkerVM> Create(WorkerDto workerDto)
     {
@@ -67,18 +71,19 @@ public class WorkerService(
     }
 
     public async Task<IEnumerable<WorkerVM>> GetAllAsync(
-                        int pageNumber, int pageSize, 
-                        Guid? jobCategoryId, int? maxAge, 
-                        int? minAge, uint? maxSalary, 
-                        uint? minSalary, int? gender, bool? status, 
+                        int pageNumber, int pageSize,
+                        Guid? jobCategoryId, int? maxAge,
+                        int? minAge, uint? maxSalary,
+                        uint? minSalary, int? gender, bool? status,
                         Guid? regionId, Guid? districtId)
     {
-        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
-            await _workersRepository.GetAllAsync(pageNumber, pageSize, jobCategoryId,
-                maxAge, minAge, maxSalary, minSalary,
-                gender, status, regionId, districtId)).ToList();
+        var workerEntities = await _workersRepository.GetAllAsync(pageNumber, pageSize, jobCategoryId,
+            maxAge, minAge, maxSalary, minSalary, gender, status, regionId, districtId);
+
+        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(workerEntities).ToList();
 
         await FillWorkerFullNames(workers);
+        await FillWorkerExperiences(workers, workerEntities);
 
         return workers;
     }
@@ -90,10 +95,16 @@ public class WorkerService(
 
         var result = _mappingService.Map<WorkerVM, Worker>(worker);
 
-        result.FullName = await _userService.GetUserFullName(worker.CreatedBy ?? 
+        result.FullName = await _userService.GetUserFullName(worker.CreatedBy ??
             throw new UzWorksException("Could not be null worker created by user id."));
 
-        return result; 
+        if (worker.CreatedBy.HasValue)
+        {
+            var experiences = await _experienceRepository.GetAllByWorkerIdAsync(worker.CreatedBy.Value);
+            result.Experiences = _mappingService.Map<IEnumerable<ExperienceVM>, IEnumerable<Experience>>(experiences).ToList();
+        }
+
+        return result;
     }
 
     public Task<int> GetCount(bool? status) =>
@@ -101,20 +112,22 @@ public class WorkerService(
 
     public async Task<IEnumerable<WorkerVM>> GetByUserId(Guid userId)
     {
-        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
-            await _workersRepository.GetByUserIdAsync(userId)).ToList();
+        var workerEntities = await _workersRepository.GetByUserIdAsync(userId);
+        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(workerEntities).ToList();
 
         await FillWorkerFullNames(workers);
+        await FillWorkerExperiences(workers, workerEntities);
 
         return workers;
     }
 
     public async Task<IEnumerable<WorkerVM>> GetTops()
     {
-        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(
-            await _workersRepository.GetTopsAsync()).ToList();
+        var workerEntities = await _workersRepository.GetTopsAsync();
+        var workers = _mappingService.Map<IEnumerable<WorkerVM>, IEnumerable<Worker>>(workerEntities).ToList();
 
         await FillWorkerFullNames(workers);
+        await FillWorkerExperiences(workers, workerEntities);
 
         return workers;
     }
@@ -230,6 +243,43 @@ public class WorkerService(
             catch
             {
                 worker.FullName = string.Empty;
+            }
+        }
+    }
+
+    private async Task FillWorkerExperiences(List<WorkerVM> workers, IEnumerable<Worker> workerEntities)
+    {
+        var userIds = workerEntities
+            .Where(w => w.CreatedBy.HasValue)
+            .Select(w => w.CreatedBy!.Value)
+            .Distinct()
+            .ToList();
+
+        if (!userIds.Any())
+            return;
+
+        var allExperiences = await _experienceRepository.GetAllByUserIdsAsync(userIds);
+        var experiencesByUser = allExperiences
+            .Where(e => e.CreatedBy.HasValue)
+            .GroupBy(e => e.CreatedBy!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var workerEntityMap = workerEntities
+            .Where(w => w.CreatedBy.HasValue)
+            .ToDictionary(w => w.Id, w => w.CreatedBy!.Value);
+
+        foreach (var worker in workers)
+        {
+            if (workerEntityMap.TryGetValue(worker.Id, out var userId) &&
+                experiencesByUser.TryGetValue(userId, out var experiences))
+            {
+                worker.Experiences = _mappingService
+                    .Map<IEnumerable<ExperienceVM>, IEnumerable<Experience>>(experiences)
+                    .ToList();
+            }
+            else
+            {
+                worker.Experiences = [];
             }
         }
     }
