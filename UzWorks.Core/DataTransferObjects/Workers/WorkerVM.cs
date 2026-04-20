@@ -1,4 +1,5 @@
-﻿using UzWorks.Core.DataTransferObjects.JobCategories;
+﻿using UzWorks.Core.DataTransferObjects.Experiences;
+using UzWorks.Core.DataTransferObjects.JobCategories;
 using UzWorks.Core.DataTransferObjects.Location.Districts;
 
 namespace UzWorks.Core.DataTransferObjects.Workers;
@@ -26,4 +27,5 @@ public class WorkerVM
 
     public DistrictVM? District { get; set; }
     public JobCategoryVM? JobCategory { get; set; }
+    public List<ExperienceVM>? Experiences { get; set; }
 }

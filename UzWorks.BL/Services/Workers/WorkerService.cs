@@ -129,7 +129,7 @@ public class WorkerService(
 
     public async Task<WorkerVM> Update(WorkerEM workerEM)
     {
-        var worker = await _workersRepository.GetById(workerEM.Id) ??
+        var worker = await _workersRepository.GetByIdWithoutExperiences(workerEM.Id) ??
             throw new UzWorksException($"Could not find worker with id: {workerEM.Id}");
         
         if (!await _districtsRepository.IsExist(workerEM.DistrictId))

@@ -11,6 +11,12 @@ public class WorkersRepository : GenericRepository<Worker>, IWorkersRepository
     {
     }
 
+    public override async ValueTask<Worker?> GetById(Guid id) =>
+        await _dbSet.Include(x => x.Experiences).FirstOrDefaultAsync(x => x.Id == id);
+
+    public async Task<Worker?> GetByIdWithoutExperiences(Guid id) =>
+        await _dbSet.FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+
     public async Task<Worker[]> GetAllAsync(int pageNumber, int pageSize,
                         Guid? jobCategoryId, int? maxAge, int? minAge, uint? maxSalary,
                         uint? minSalary, int? gender, bool? status, Guid? regionId, Guid? districtId)
