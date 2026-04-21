@@ -1,18 +1,19 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UzWorks.BL.Services.Chat;
+using UzWorks.Core.Abstract;
 using UzWorks.Core.DataTransferObjects.Chat;
-using UzWorks.Core.Exceptions;
 
 namespace UzWorks.API.Controllers;
 
-public class ChatController(IChatService _chatService) : BaseController
+public class ChatController(
+    IChatService _chatService,
+    IEnvironmentAccessor _environmentAccessor) : BaseController
 {
     /// <summary>Start a new conversation or return existing one.</summary>
     [HttpPost]
     public async Task<ActionResult<ConversationVM>> StartConversation([FromBody] StartConversationDto dto)
     {
-        var userId = GetCurrentUserId();
+        var userId = Guid.Parse(_environmentAccessor.GetUserId());
         return Ok(await _chatService.StartOrGetConversationAsync(userId, dto));
     }
 
@@ -20,7 +21,7 @@ public class ChatController(IChatService _chatService) : BaseController
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ConversationVM>>> GetConversations()
     {
-        var userId = GetCurrentUserId();
+        var userId = Guid.Parse(_environmentAccessor.GetUserId());
         return Ok(await _chatService.GetUserConversationsAsync(userId));
     }
 
@@ -28,7 +29,7 @@ public class ChatController(IChatService _chatService) : BaseController
     [HttpGet("{id}")]
     public async Task<ActionResult<ConversationVM>> GetConversation([FromRoute] Guid id)
     {
-        var userId = GetCurrentUserId();
+        var userId = Guid.Parse(_environmentAccessor.GetUserId());
         return Ok(await _chatService.GetConversationAsync(id, userId));
     }
 
@@ -36,7 +37,7 @@ public class ChatController(IChatService _chatService) : BaseController
     [HttpPost]
     public async Task<ActionResult<MessageVM>> SendMessage([FromBody] SendMessageDto dto)
     {
-        var userId = GetCurrentUserId();
+        var userId = Guid.Parse(_environmentAccessor.GetUserId());
         return Ok(await _chatService.SendMessageAsync(userId, dto));
     }
 
@@ -47,7 +48,7 @@ public class ChatController(IChatService _chatService) : BaseController
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 50)
     {
-        var userId = GetCurrentUserId();
+        var userId = Guid.Parse(_environmentAccessor.GetUserId());
         return Ok(await _chatService.GetMessagesAsync(conversationId, userId, pageNumber, pageSize));
     }
 
@@ -55,15 +56,8 @@ public class ChatController(IChatService _chatService) : BaseController
     [HttpPut("{conversationId}")]
     public async Task<ActionResult> MarkAsRead([FromRoute] Guid conversationId)
     {
-        var userId = GetCurrentUserId();
+        var userId = Guid.Parse(_environmentAccessor.GetUserId());
         await _chatService.MarkAsReadAsync(conversationId, userId);
         return Ok();
-    }
-
-    private Guid GetCurrentUserId()
-    {
-        var claim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ??
-            throw new UzWorksException("User is not authenticated.");
-        return Guid.Parse(claim);
     }
 }
