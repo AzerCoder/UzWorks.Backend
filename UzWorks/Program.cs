@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
-using Microsoft.Extensions.Configuration.Json;
 using UzWorks.API;
 using UzWorks.API.Hubs;
 using UzWorks.API.Middleware;
@@ -13,14 +12,12 @@ using UzWorks.Infrastructure;
 using UzWorks.Infrastructure.ExceptionHandling;
 using UzWorks.Persistence;
 
+// Must be set BEFORE CreateBuilder — prevents FileSystemWatcher creation
+// which hits Linux inotify instance limit (1024) on Render free tier.
+Environment.SetEnvironmentVariable("DOTNET_HOSTBUILDER__RELOADCONFIGONCHANGE", "false");
+
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseKestrel();
-
-// Render free tier can hit inotify limits; disable config file watchers.
-foreach (var source in builder.Configuration.Sources.OfType<JsonConfigurationSource>())
-{
-    source.ReloadOnChange = false;
-}
 
 builder.Services.AddOptions();
 builder.Services.Configure<AccessConfiguration>(builder.Configuration.GetSection("AccessConfiguration"));
