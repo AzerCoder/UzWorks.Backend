@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi.Models;
 using UzWorks.API;
 using UzWorks.API.Hubs;
@@ -82,6 +83,7 @@ builder.Services.RegisterBLModule();
 builder.Services.RegisterInfrastructureModule(builder.Configuration);
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, ChatUserIdProvider>();
 
 builder.Services.AddCors(options =>
 {
