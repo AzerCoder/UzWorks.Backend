@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using UzWorks.Persistence.Data;
 using System.Reflection;
 using UzWorks.Persistence.Repositories;
@@ -44,10 +45,26 @@ public static class PersistenceModule
         services.AddScoped<IMessageRepository, MessageRepository>();
 
         using var provider = services.BuildServiceProvider();
-
+        var logger = provider.GetService<ILogger<UzWorksDbContext>>();
         var dbContext = provider.GetService<UzWorksDbContext>();
 
-        dbContext?.Database.Migrate();
+        if (dbContext is null)
+        {
+            logger?.LogError("[Migration] UzWorksDbContext could not be resolved.");
+            return services;
+        }
+
+        try
+        {
+            logger?.LogInformation("[Migration] Applying pending migrations...");
+            dbContext.Database.Migrate();
+            logger?.LogInformation("[Migration] Migrations applied successfully.");
+        }
+        catch (Exception ex)
+        {
+            logger?.LogError(ex, "[Migration] Database.Migrate() failed: {Message}", ex.Message);
+            throw; // rethrow so Render shows the real error in deploy logs
+        }
 
         return services;
     }
