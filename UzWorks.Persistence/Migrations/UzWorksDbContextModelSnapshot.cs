@@ -81,6 +81,14 @@ namespace UzWorks.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsDeletedByParticipantOne")
+                        .HasDefaultValue(false)
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeletedByParticipantTwo")
+                        .HasDefaultValue(false)
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("JobId")
                         .HasColumnType("uuid");
 

@@ -120,6 +120,25 @@ public class ChatService(
         await _messageRepository.MarkAsReadAsync(conversationId, userId);
     }
 
+    public async Task DeleteConversationAsync(Guid conversationId, Guid userId)
+    {
+        var conversation = await _conversationRepository.GetById(conversationId) ??
+            throw new UzWorksException($"Conversation with id {conversationId} not found.");
+
+        if (conversation.ParticipantOneId != userId && conversation.ParticipantTwoId != userId)
+            throw new UzWorksException("You do not have access to this conversation.");
+
+        // Soft-delete for this user; returns true when both sides deleted
+        var bothDeleted = await _conversationRepository.SoftDeleteForUserAsync(conversationId, userId);
+
+        if (bothDeleted)
+        {
+            // Hard delete — removes conversation and all messages (CASCADE)
+            _conversationRepository.Delete(conversation);
+            await _conversationRepository.SaveChanges();
+        }
+    }
+
     // ─── Private helpers ────────────────────────────────────────────────────────
 
     private async Task<ConversationVM> BuildConversationVM(Conversation conversation, Guid currentUserId)

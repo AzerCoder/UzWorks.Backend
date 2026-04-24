@@ -60,4 +60,17 @@ public class ChatController(
         await _chatService.MarkAsReadAsync(conversationId, userId);
         return Ok();
     }
+
+    /// <summary>
+    /// Delete a conversation for the current user.
+    /// The conversation stays visible for the other participant.
+    /// When both participants delete it, the conversation is permanently removed from the database.
+    /// </summary>
+    [HttpDelete("{conversationId}")]
+    public async Task<ActionResult> DeleteConversation([FromRoute] Guid conversationId)
+    {
+        var userId = Guid.Parse(_environmentAccessor.GetUserId());
+        await _chatService.DeleteConversationAsync(conversationId, userId);
+        return NoContent();
+    }
 }

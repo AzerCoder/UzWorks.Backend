@@ -17,6 +17,8 @@ public class ConversationEntityConfiguration : IEntityTypeConfiguration<Conversa
         builder.Property(x => x.ParticipantTwoId).IsRequired();
         builder.Property(x => x.JobId);
         builder.Property(x => x.WorkerId);
+        builder.Property(x => x.IsDeletedByParticipantOne).IsRequired().HasDefaultValue(false);
+        builder.Property(x => x.IsDeletedByParticipantTwo).IsRequired().HasDefaultValue(false);
 
         builder.HasMany(x => x.Messages)
             .WithOne(x => x.Conversation)
