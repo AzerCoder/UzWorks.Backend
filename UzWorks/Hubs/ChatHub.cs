@@ -20,6 +20,11 @@ public class ChatHub(IChatService _chatService) : Hub
         await base.OnConnectedAsync();
     }
 
+    /// <summary>
+    /// Join a conversation room.
+    /// Marks all unread messages as read and adds the connection to the group.
+    /// Optional — messages are delivered via Clients.Users() regardless of group membership.
+    /// </summary>
     public async Task JoinConversation(Guid conversationId)
     {
         var userId = GetUserId();
@@ -32,12 +37,25 @@ public class ChatHub(IChatService _chatService) : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, conversationId.ToString());
     }
 
+    /// <summary>
+    /// Send a message. Delivered to BOTH participants by UserId —
+    /// no need for the recipient to have called JoinConversation first.
+    /// </summary>
     public async Task SendMessage(Guid conversationId, string content)
     {
-        var userId = GetUserId();
+        var senderId = GetUserId();
         var dto = new SendMessageDto { ConversationId = conversationId, Content = content };
-        var message = await _chatService.SendMessageAsync(userId, dto);
-        await Clients.Group(conversationId.ToString()).SendAsync("ReceiveMessage", message);
+
+        // Save to DB
+        var message = await _chatService.SendMessageAsync(senderId, dto);
+
+        // Get both participant IDs
+        var (p1, p2) = await _chatService.GetParticipantIdsAsync(conversationId);
+
+        // Deliver to ALL active connections of both users — regardless of JoinConversation
+        await Clients
+            .Users(p1.ToString(), p2.ToString())
+            .SendAsync("ReceiveMessage", message);
     }
 
     private Guid GetUserId()

@@ -139,6 +139,14 @@ public class ChatService(
         }
     }
 
+    public async Task<(Guid P1, Guid P2)> GetParticipantIdsAsync(Guid conversationId)
+    {
+        var conversation = await _conversationRepository.GetById(conversationId) ??
+            throw new UzWorksException($"Conversation with id {conversationId} not found.");
+
+        return (conversation.ParticipantOneId, conversation.ParticipantTwoId);
+    }
+
     // ─── Private helpers ────────────────────────────────────────────────────────
 
     private async Task<ConversationVM> BuildConversationVM(Conversation conversation, Guid currentUserId)

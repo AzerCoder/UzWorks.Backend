@@ -11,4 +11,7 @@ public interface IChatService
     Task<IEnumerable<MessageVM>> GetMessagesAsync(Guid conversationId, Guid userId, int pageNumber, int pageSize);
     Task MarkAsReadAsync(Guid conversationId, Guid userId);
     Task DeleteConversationAsync(Guid conversationId, Guid userId);
+
+    /// <summary>Returns (participantOneId, participantTwoId) for the given conversation.</summary>
+    Task<(Guid P1, Guid P2)> GetParticipantIdsAsync(Guid conversationId);
 }
