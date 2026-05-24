@@ -109,7 +109,7 @@ public class ChatService(
         return messages.Select(m => ToMessageVM(m, nameCache.GetValueOrDefault(m.SenderId, string.Empty)));
     }
 
-    public async Task MarkAsReadAsync(Guid conversationId, Guid userId)
+    public async Task<IReadOnlyList<Guid>> MarkAsReadAsync(Guid conversationId, Guid userId)
     {
         var conversation = await _conversationRepository.GetById(conversationId) ??
             throw new UzWorksException($"Conversation with id {conversationId} not found.");
@@ -117,7 +117,7 @@ public class ChatService(
         if (conversation.ParticipantOneId != userId && conversation.ParticipantTwoId != userId)
             throw new UzWorksException("You do not have access to this conversation.");
 
-        await _messageRepository.MarkAsReadAsync(conversationId, userId);
+        return await _messageRepository.MarkAsReadAsync(conversationId, userId);
     }
 
     public async Task DeleteConversationAsync(Guid conversationId, Guid userId)
